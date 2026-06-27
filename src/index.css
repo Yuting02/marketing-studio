@@ -11,24 +11,71 @@ body {
   color: #1a1a1a;
 }
 
-/* 让内容在整个屏幕里水平 + 垂直居中 */
-.home {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 12px;
-  padding: 24px;
+/* 页面容器：限制宽度并居中，朴素能用即可 */
+.page {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 32px 24px;
 }
 
-.home-title {
-  font-size: 2.2rem;
+.page-title {
+  font-size: 1.8rem;
   font-weight: 700;
 }
 
-.home-subtitle {
-  font-size: 1.1rem;
+.page-subtitle {
+  font-size: 1rem;
   color: #6b7280;
+  margin-bottom: 24px;
+}
+
+/* 表单：竖向排列，每项之间留点间距 */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-weight: 600;
+}
+
+.field input[type="text"],
+.field textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font: inherit;
+}
+
+/* 语种复选框横向排列 */
+.checkbox-row {
+  display: flex;
+  gap: 20px;
+}
+
+button {
+  align-self: flex-start;
+  padding: 8px 20px;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* 提交后展示收集到的数据 */
+.result {
+  margin-top: 24px;
+}
+
+.result pre {
+  background: #eef0f3;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
 }
