@@ -79,3 +79,55 @@ button {
   border-radius: 4px;
   overflow-x: auto;
 }
+
+/* 每个语种一组 */
+.lang-group {
+  margin-bottom: 28px;
+}
+
+.lang-title {
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+}
+
+/* 同一组里的卡片竖向排列 */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 单张文案卡片 */
+.card {
+  background: #fff;
+  border: 1px solid #e3e6ea;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* 卡片里的每个字段：小标签 + 内容 */
+.card-field {
+  margin-bottom: 10px;
+}
+
+.card-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.card-value {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* 复制按钮 */
+.copy-btn {
+  margin-top: 4px;
+  padding: 6px 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f3f4f6;
+}

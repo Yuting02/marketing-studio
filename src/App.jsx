@@ -1,6 +1,58 @@
 import { useState } from 'react'
 
-// 首页：广告文案生成表单（生成功能的前半部分，暂不接大模型）
+// 语种展示顺序与中文名：先 English 一组，再 French 一组
+const LANG_ORDER = ['en', 'fr']
+const LANG_NAMES = { en: 'English', fr: 'French' }
+
+// 单张文案卡片：展示 4 个字段，并提供「复制」按钮
+function VariantCard({ variant }) {
+  const [copied, setCopied] = useState(false) // 是否刚复制过（短暂提示用）
+
+  // 把这条文案的四个字段整理成一段文本，复制到剪贴板
+  async function handleCopy() {
+    const text = [
+      `主文案：${variant.primaryText}`,
+      `标题：${variant.headline}`,
+      `描述：${variant.description}`,
+      `行动号召(CTA)：${variant.cta}`,
+    ].join('\n')
+
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500) // 1.5 秒后恢复按钮文字
+    } catch (err) {
+      console.error('复制失败：', err)
+    }
+  }
+
+  return (
+    <div className="card">
+      <div className="card-field">
+        <span className="card-label">主文案</span>
+        <p className="card-value">{variant.primaryText}</p>
+      </div>
+      <div className="card-field">
+        <span className="card-label">标题</span>
+        <p className="card-value">{variant.headline}</p>
+      </div>
+      <div className="card-field">
+        <span className="card-label">描述</span>
+        <p className="card-value">{variant.description}</p>
+      </div>
+      <div className="card-field">
+        <span className="card-label">行动号召(CTA)</span>
+        <p className="card-value">{variant.cta}</p>
+      </div>
+
+      <button type="button" className="copy-btn" onClick={handleCopy}>
+        {copied ? '已复制' : '复制'}
+      </button>
+    </div>
+  )
+}
+
+// 首页：广告文案生成表单 + 结果卡片
 function App() {
   // 三个输入项分别用 useState 管理
   const [productName, setProductName] = useState('')   // 产品名
@@ -120,11 +172,23 @@ function App() {
         </div>
       )}
 
-      {/* 成功后，把接口返回的数据原样显示出来（先不做卡片） */}
+      {/* 成功后：按语种分组展示卡片，每组 3 张 */}
       {result && (
         <div className="result">
-          <h2>接口返回</h2>
-          <pre>{JSON.stringify(result, null, 2)}</pre>
+          {LANG_ORDER.map((code) => {
+            const items = result.variants.filter((v) => v.lang === code)
+            if (items.length === 0) return null // 没勾这个语种就不显示
+            return (
+              <section key={code} className="lang-group">
+                <h2 className="lang-title">{LANG_NAMES[code]}</h2>
+                <div className="card-list">
+                  {items.map((variant, index) => (
+                    <VariantCard key={`${code}-${index}`} variant={variant} />
+                  ))}
+                </div>
+              </section>
+            )
+          })}
         </div>
       )}
     </main>
