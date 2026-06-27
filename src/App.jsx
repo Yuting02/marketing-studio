@@ -14,7 +14,7 @@ function VariantCard({ variant }) {
       `主文案：${variant.primaryText}`,
       `标题：${variant.headline}`,
       `描述：${variant.description}`,
-      `行动号召(CTA)：${variant.cta}`,
+      `引导类别(CTA)：${variant.cta}`,
     ].join('\n')
 
     try {
@@ -41,7 +41,7 @@ function VariantCard({ variant }) {
         <p className="card-value">{variant.description}</p>
       </div>
       <div className="card-field">
-        <span className="card-label">行动号召(CTA)</span>
+        <span className="card-label">引导类别(CTA)</span>
         <p className="card-value">{variant.cta}</p>
       </div>
 
