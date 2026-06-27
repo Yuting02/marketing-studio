@@ -23,7 +23,7 @@ function ruleLabel(rule) {
 }
 
 // 单张文案卡片：展示 4 个字段 + 质检结果，并提供「复制」按钮
-function VariantCard({ variant, review, reviewLoading }) {
+function VariantCard({ variant, review, reviewLoading, position }) {
   const [copied, setCopied] = useState(false) // 是否刚复制过（短暂提示用）
 
   // 只把广告的四个字段整理成一段文本复制（译文 translations 故意不在内）
@@ -45,32 +45,35 @@ function VariantCard({ variant, review, reviewLoading }) {
   }
 
   return (
-    <div className="card">
+    <article className="card">
+      <div className="card-topline">
+        <span className="card-index">Variant {position}</span>
+        <span className="cta-chip">{variant.cta}</span>
+      </div>
+
       {/* 每个外文字段下方各显示对应中文译文（灰色小字，靠样式区分，不被复制） */}
-      <div className="card-field">
+      <div className="card-field card-field-primary">
         <span className="card-label">主文案</span>
         <p className="card-value">{variant.primaryText}</p>
         {variant.translations?.primaryText_zh && (
           <p className="card-translation">{variant.translations.primaryText_zh}</p>
         )}
       </div>
-      <div className="card-field">
-        <span className="card-label">标题</span>
-        <p className="card-value">{variant.headline}</p>
-        {variant.translations?.headline_zh && (
-          <p className="card-translation">{variant.translations.headline_zh}</p>
-        )}
-      </div>
-      <div className="card-field">
-        <span className="card-label">描述</span>
-        <p className="card-value">{variant.description}</p>
-        {variant.translations?.description_zh && (
-          <p className="card-translation">{variant.translations.description_zh}</p>
-        )}
-      </div>
-      <div className="card-field">
-        <span className="card-label">引导类别(CTA)</span>
-        <p className="card-value">{variant.cta}</p>
+      <div className="card-field-grid">
+        <div className="card-field">
+          <span className="card-label">标题</span>
+          <p className="card-value">{variant.headline}</p>
+          {variant.translations?.headline_zh && (
+            <p className="card-translation">{variant.translations.headline_zh}</p>
+          )}
+        </div>
+        <div className="card-field">
+          <span className="card-label">描述</span>
+          <p className="card-value">{variant.description}</p>
+          {variant.translations?.description_zh && (
+            <p className="card-translation">{variant.translations.description_zh}</p>
+          )}
+        </div>
       </div>
 
       {/* 质检结果区：还没返回时显示占位，返回后填上徽章/标签/评分/建议 */}
@@ -112,21 +115,44 @@ function VariantCard({ variant, review, reviewLoading }) {
             )}
           </>
         ) : reviewLoading ? (
-          <p className="review-pending">质检中…</p>
+          <div className="review-pending" aria-label="质检中">
+            <span />
+            <span />
+          </div>
         ) : null}
       </div>
 
       <button type="button" className="copy-btn" onClick={handleCopy}>
-        {copied ? '已复制' : '复制'}
+        {copied ? '已复制' : '复制文案'}
       </button>
-    </div>
+    </article>
+  )
+}
+
+function LoadingPreview() {
+  return (
+    <section className="state-panel loading-panel" aria-label="生成中">
+      <div className="state-panel-header">
+        <span className="eyebrow">Generating</span>
+        <h2>正在生成文案与质检队列</h2>
+      </div>
+      <div className="skeleton-grid">
+        {[1, 2, 3].map((item) => (
+          <div className="skeleton-card" key={item}>
+            <span />
+            <span />
+            <span />
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 
 // 首页：广告文案生成表单 + 结果卡片
 function App() {
   // 三个输入项分别用 useState 管理
-  const [productName, setProductName] = useState('')   // 产品名
+  const [productName, setProductName] = useState('') // 产品名
   const [sellingPoints, setSellingPoints] = useState('') // 卖点
   // 语种用一个对象记录每个是否勾选，默认两个都勾上
   const [langs, setLangs] = useState({ en: true, fr: true })
@@ -134,7 +160,7 @@ function App() {
   // 生成接口返回的结果；null 表示还没点过按钮
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false) // 生成请求进行中
-  const [error, setError] = useState(null)       // 生成出错信息
+  const [error, setError] = useState(null) // 生成出错信息
 
   // 质检接口（/api/review）的状态：原始结果先用 <pre> 显示，方便确认判定
   const [reviewResult, setReviewResult] = useState(null)
@@ -185,10 +211,10 @@ function App() {
       langs: selectedLangs,
     }
 
-    setLoading(true)        // 进入加载态，按钮禁用
-    setError(null)          // 清掉上一次的错误
-    setResult(null)         // 清掉上一次的结果
-    setReviewResult(null)   // 一并清掉上一次的质检结果
+    setLoading(true) // 进入加载态，按钮禁用
+    setError(null) // 清掉上一次的错误
+    setResult(null) // 清掉上一次的结果
+    setReviewResult(null) // 一并清掉上一次的质检结果
     setReviewError(null)
 
     try {
@@ -220,73 +246,121 @@ function App() {
     (reviewResult?.reviews || []).map((r) => [r.variantId, r]),
   )
 
+  const selectedLangCount = Object.values(langs).filter(Boolean).length
+
   return (
     <main className="page">
-      <h1 className="page-title">出海营销内容工作台</h1>
-      <p className="page-subtitle">Meta 广告文案生成 + 合规质检</p>
+      <section className="masthead">
+        <div>
+          <span className="eyebrow">Meta ads studio</span>
+          <h1 className="page-title">
+            <span>出海营销内容</span>
+            <span>工作台</span>
+          </h1>
+        </div>
+        <p className="page-subtitle">多语种广告文案生成与合规质检</p>
+      </section>
 
-      <div className="form">
-        {/* 产品名：单行输入 */}
-        <label className="field">
-          <span className="field-label">产品名</span>
-          <input
-            type="text"
-            value={productName}
-            onChange={(e) => setProductName(e.target.value)}
-            placeholder="例如：便携保温杯"
-          />
-        </label>
+      <section className="studio-grid" aria-label="文案生成工作台">
+        <div className="composer">
+          <div className="composer-header">
+            <div>
+              <span className="eyebrow">Brief</span>
+              <h2>创作输入</h2>
+            </div>
+            <span className="language-count">{selectedLangCount} 语种</span>
+          </div>
 
-        {/* 卖点：多行文本框 */}
-        <label className="field">
-          <span className="field-label">卖点</span>
-          <textarea
-            rows={4}
-            value={sellingPoints}
-            onChange={(e) => setSellingPoints(e.target.value)}
-            placeholder="写 2-3 句，例如：12 小时保温；一键开盖；316 不锈钢内胆"
-          />
-        </label>
-
-        {/* 目标语种：两个复选框，默认都勾选 */}
-        <div className="field">
-          <span className="field-label">目标语种</span>
-          <div className="checkbox-row">
-            <label>
+          <div className="form">
+            {/* 产品名：单行输入 */}
+            <label className="field">
+              <span className="field-label">产品名</span>
               <input
-                type="checkbox"
-                checked={langs.en}
-                onChange={() => toggleLang('en')}
+                type="text"
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                placeholder="例如：便携保温杯"
               />
-              English
             </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={langs.fr}
-                onChange={() => toggleLang('fr')}
+
+            {/* 卖点：多行文本框 */}
+            <label className="field">
+              <span className="field-label">卖点</span>
+              <textarea
+                rows={5}
+                value={sellingPoints}
+                onChange={(e) => setSellingPoints(e.target.value)}
+                placeholder="写 2-3 句，例如：12 小时保温；一键开盖；316 不锈钢内胆"
               />
-              French
             </label>
+
+            {/* 目标语种：两个复选框，默认都勾选 */}
+            <div className="field">
+              <span className="field-label">目标语种</span>
+              <div className="checkbox-row">
+                <label className="lang-option">
+                  <input
+                    type="checkbox"
+                    checked={langs.en}
+                    onChange={() => toggleLang('en')}
+                  />
+                  <span>English</span>
+                </label>
+                <label className="lang-option">
+                  <input
+                    type="checkbox"
+                    checked={langs.fr}
+                    onChange={() => toggleLang('fr')}
+                  />
+                  <span>French</span>
+                </label>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="generate-btn"
+              onClick={handleGenerate}
+              disabled={loading}
+            >
+              {loading ? '生成中...' : '生成文案'}
+            </button>
           </div>
         </div>
 
-        <button type="button" onClick={handleGenerate} disabled={loading}>
-          {loading ? '生成中…' : '生成文案'}
-        </button>
-      </div>
+        {!loading && !result && !error && (
+          <aside className="state-panel empty-state" aria-label="空状态">
+            <span className="eyebrow">Output</span>
+            <h2>等待创作 brief</h2>
+            <p>尚未生成内容。</p>
+            <div className="workflow-strip">
+              <span>生成</span>
+              <span>翻译参考</span>
+              <span>合规质检</span>
+            </div>
+          </aside>
+        )}
 
-      {/* 出错时显示错误信息 */}
-      {error && (
-        <div className="result">
-          <h2>出错了</h2>
-          <pre>{error}</pre>
-        </div>
-      )}
+        {loading && <LoadingPreview />}
+
+        {error && (
+          <section className="state-panel error-panel" aria-label="生成错误">
+            <span className="eyebrow">Request failed</span>
+            <h2>生成失败</h2>
+            <pre>{error}</pre>
+          </section>
+        )}
+      </section>
 
       {/* 成功后：按语种分组展示卡片，每组 3 张 */}
       {result && (
-        <div className="result">
+        <section className="result" aria-label="生成结果">
+          <div className="result-header">
+            <span className="eyebrow">Output</span>
+            <h2>生成结果</h2>
+            <p>当前批次</p>
+          </div>
+
           {LANG_ORDER.map((code) => {
             // 保留全局下标，才能用 variantId 把质检结果对到这张卡片
             const items = result.variants
@@ -295,28 +369,32 @@ function App() {
             if (items.length === 0) return null // 没勾这个语种就不显示
             return (
               <section key={code} className="lang-group">
-                <h2 className="lang-title">{LANG_NAMES[code]}</h2>
+                <div className="lang-heading">
+                  <h3 className="lang-title">{LANG_NAMES[code]}</h3>
+                  <span>{items.length} variants</span>
+                </div>
                 <div className="card-list">
-                  {items.map(({ variant, index }) => (
+                  {items.map(({ variant, index }, itemIndex) => (
                     <VariantCard
                       key={index}
                       variant={variant}
                       review={reviewsById.get(index)}
                       reviewLoading={reviewLoading}
+                      position={itemIndex + 1}
                     />
                   ))}
                 </div>
               </section>
             )
           })}
-        </div>
+        </section>
       )}
 
       {/* 质检失败时给个整体提示（此时卡片质检区为空） */}
       {reviewError && (
-        <div className="result">
+        <section className="state-panel review-error-panel" aria-label="质检错误">
           <p className="review-error">质检失败：{reviewError}</p>
-        </div>
+        </section>
       )}
     </main>
   )
