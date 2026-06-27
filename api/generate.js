@@ -1,40 +1,40 @@
 import OpenAI from "openai";
 
 // 生成节点：接收产品信息，调用 OpenAI 生成 Meta 多语种广告文案。
-// 提示词与输出 schema 严格照抄 docs/prompts.md「生成节点 generation」那一节。
+// 提示词与输出 schema 严格照抄 docs/prompt/prompts-v2.md「生成节点 generation」那一节。
 
 // 优先用高性价比的 gpt-4o-mini；若该模型在账号里不可用，自动换下一个候选模型。
 const CANDIDATE_MODELS = ["gpt-4o-mini", "gpt-4o"];
 
-// —— System 提示词（docs/prompts.md）——
+// —— System 提示词（docs/prompt/prompts-v2.md）——
 const SYSTEM_PROMPT =
-  "You are a senior performance-marketing copywriter who writes Meta (Facebook/Instagram) ad copy for brands expanding into overseas markets. Write copy that sounds native and natural to a first-language reader of the target language — never literal or translated. Follow Meta's ad field conventions and the requested character limits.";
+  "你是一名资深海外效果广告文案，负责为正在拓展海外市场的品牌撰写 Meta (Facebook/Instagram) 广告文案。文案必须让目标语言的母语读者读起来地道、自然，绝不能生硬直译或像翻译腔。遵循 Meta 广告字段规范和指定的字符限制。";
 
-// —— User 提示词模板（docs/prompts.md，{{...}} 用表单值填充）——
+// —— User 提示词模板（docs/prompt/prompts-v2.md，{{...}} 用表单值填充）——
 function buildUserPrompt({ productName, sellingPoints, langs }) {
-  return `Product: ${productName}
-Key selling points: ${sellingPoints}
+  return `产品：${productName}
+核心卖点：${sellingPoints}
 
-For EACH target language in ${JSON.stringify(
+针对 \`${JSON.stringify(
     langs
-  )} ("en" = English, "fr" = French), write 3 distinct ad variants.
-The 3 variants must take different angles — e.g. one benefit-led, one emotion/story-led, one urgency/offer-led. Do not restate the same idea three times.
+  )}\` 中的每一种目标语言（\`"en" = 英文\`，\`"fr" = 法文\`），生成 3 个彼此不同的广告变体。
+这 3 个变体必须采用不同角度，例如：一个突出利益点，一个突出情绪或故事，一个突出紧迫感或优惠。不要把同一个想法重复 3 次。
 
-Each variant has:
-- primaryText: main ad body, in the target language, ≤125 characters
-- headline: ≤40 characters, in the target language
-- description: ≤30 characters, in the target language
-- cta: exactly one of SHOP_NOW, LEARN_MORE, SIGN_UP, GET_OFFER
-- translations: an object with faithful, natural Chinese (中文) translations of the three text fields, for a Chinese operator to understand. These are reference glosses, NOT part of the ad:
-  - primaryText_zh: Chinese translation of primaryText
-  - headline_zh: Chinese translation of headline
-  - description_zh: Chinese translation of description
+每个变体包含：
+- primaryText：广告正文，使用目标语言，≤125 个字符
+- headline：广告标题，使用目标语言，≤40 个字符
+- description：广告描述，使用目标语言，≤30 个字符
+- cta：必须且只能是 SHOP_NOW, LEARN_MORE, SIGN_UP, GET_OFFER 之一
+- translations：一个对象，包含对三个文本字段的忠实、自然的中文翻译，供中文运营人员理解。这些只是参考释义，不属于广告内容：
+  - primaryText_zh：primaryText 的中文翻译
+  - headline_zh：headline 的中文翻译
+  - description_zh：description 的中文翻译
 
-Write every ad field directly in the target language. Do not write English first and translate. Only the \`translations\` object is in Chinese.`;
+所有广告字段都要直接用目标语言写。不要先写英文再翻译。只有 \`translations\` 对象使用中文。`;
 }
 
 // —— 输出 Schema（OpenAI Structured Outputs，strict）——
-// 对应 docs/prompts.md：variants 数组，每项 6 个字段，全部必填。
+// 对应 docs/prompt/prompts-v2.md：variants 数组，每项含 translations，全部必填。
 const OUTPUT_SCHEMA = {
   type: "object",
   properties: {
