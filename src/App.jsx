@@ -60,14 +60,47 @@ function App() {
   // 语种用一个对象记录每个是否勾选，默认两个都勾上
   const [langs, setLangs] = useState({ en: true, fr: true })
 
-  // 接口返回的结果；null 表示还没点过按钮
+  // 生成接口返回的结果；null 表示还没点过按钮
   const [result, setResult] = useState(null)
-  const [loading, setLoading] = useState(false) // 请求进行中
-  const [error, setError] = useState(null)       // 出错信息
+  const [loading, setLoading] = useState(false) // 生成请求进行中
+  const [error, setError] = useState(null)       // 生成出错信息
+
+  // 质检接口（/api/review）的状态：原始结果先用 <pre> 显示，方便确认判定
+  const [reviewResult, setReviewResult] = useState(null)
+  const [reviewLoading, setReviewLoading] = useState(false)
+  const [reviewError, setReviewError] = useState(null)
 
   // 勾选 / 取消某个语种
   function toggleLang(code) {
     setLangs((prev) => ({ ...prev, [code]: !prev[code] }))
+  }
+
+  // 拿生成好的 variants 调 /api/review，做合规质检
+  async function runReview(variants) {
+    setReviewLoading(true)
+    setReviewError(null)
+    setReviewResult(null)
+
+    try {
+      const res = await fetch('/api/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variants }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data?.message || `质检失败（${res.status}）`)
+      }
+
+      setReviewResult(data) // 成功：原样显示质检结果
+    } catch (err) {
+      console.error('质检失败：', err)
+      setReviewError(err.message || '质检失败，请稍后重试')
+    } finally {
+      setReviewLoading(false)
+    }
   }
 
   // 点"生成文案"：把表单数据 POST 给 /api/generate，结果显示在下方
@@ -81,9 +114,11 @@ function App() {
       langs: selectedLangs,
     }
 
-    setLoading(true)   // 进入加载态，按钮禁用
-    setError(null)     // 清掉上一次的错误
-    setResult(null)    // 清掉上一次的结果
+    setLoading(true)        // 进入加载态，按钮禁用
+    setError(null)          // 清掉上一次的错误
+    setResult(null)         // 清掉上一次的结果
+    setReviewResult(null)   // 一并清掉上一次的质检结果
+    setReviewError(null)
 
     try {
       const res = await fetch('/api/generate', {
@@ -99,7 +134,8 @@ function App() {
         throw new Error(data?.message || `请求失败（${res.status}）`)
       }
 
-      setResult(data) // 成功：原样显示返回数据
+      setResult(data) // 成功：渲染卡片
+      runReview(data.variants) // 卡片出来后，自动用 variants 调质检（不阻塞 loading）
     } catch (err) {
       console.error('生成失败：', err)
       setError(err.message || '生成失败，请稍后重试')
@@ -189,6 +225,27 @@ function App() {
               </section>
             )
           })}
+        </div>
+      )}
+
+      {/* 质检状态：进行中 / 出错 / 原始结果（先用 <pre> 确认判定，之后再美化） */}
+      {reviewLoading && (
+        <div className="result">
+          <p>质检中…</p>
+        </div>
+      )}
+
+      {reviewError && (
+        <div className="result">
+          <h2>质检出错</h2>
+          <pre>{reviewError}</pre>
+        </div>
+      )}
+
+      {reviewResult && (
+        <div className="result">
+          <h2>质检结果（原始）</h2>
+          <pre>{JSON.stringify(reviewResult, null, 2)}</pre>
         </div>
       )}
     </main>
