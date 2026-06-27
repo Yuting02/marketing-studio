@@ -15,16 +15,24 @@ For EACH target language in {{langs}} ("en" = English, "fr" = French), write 3 d
 The 3 variants must take different angles — e.g. one benefit-led, one emotion/story-led, one urgency/offer-led. Do not restate the same idea three times.
 
 Each variant has:
-- primaryText: main ad body, written in the target language, ≤125 characters
+- primaryText: main ad body, in the target language, ≤125 characters
 - headline: ≤40 characters, in the target language
 - description: ≤30 characters, in the target language
 - cta: exactly one of SHOP_NOW, LEARN_MORE, SIGN_UP, GET_OFFER
+- translations: an object with faithful, natural Chinese (中文) translations of the three text fields, for a Chinese operator to understand. These are reference glosses, NOT part of the ad:
+  - primaryText_zh: Chinese translation of primaryText
+  - headline_zh: Chinese translation of headline
+  - description_zh: Chinese translation of description
 
-Write every field directly in the target language. Do not write English first and translate.
+Write every ad field directly in the target language. Do not write English first and translate. Only the `translations` object is in Chinese.
 
 ### 输出 Schema（strict）
 ```json
-{ "variants": [ { "id": 0, "lang": "en", "primaryText": "...", "headline": "...", "description": "...", "cta": "SHOP_NOW" } ] }
+{ "variants": [ {
+  "id": 0, "lang": "en",
+  "primaryText": "...", "headline": "...", "description": "...", "cta": "SHOP_NOW",
+  "translations": { "primaryText_zh": "……", "headline_zh": "……", "description_zh": "……" }
+} ] }
 ```
 约束：lang ∈ {en, fr}；cta ∈ {SHOP_NOW, LEARN_MORE, SIGN_UP, GET_OFFER}；所有字段必填。
 
@@ -36,10 +44,9 @@ Write every field directly in the target language. Do not write English first an
 
 ### 规则配置（规则即配置，可随时调，无需改逻辑）
 - maxLengths：`{ primaryText: 125, headline: 40, description: 30 }`
-- bannedWords（绝对化/夸大，违反广告平台规范；大小写不敏感、整词匹配）：
+- bannedWords（绝对化/夸大；大小写不敏感、整词匹配）：
   `best, #1, no.1, number one, guaranteed, guarantee, 100%, miracle, cheapest, risk-free`
-  （目前以英文为主，可按需扩展法语词）
-- fluencyThreshold：`70`（地道度低于此值算风险）
+- fluencyThreshold：`70`
 
 ### 代码层（确定性，零成本，零延迟）
 - 规则① 长度：任一字段超过 maxLengths → rulesHit 加 `length:字段名`

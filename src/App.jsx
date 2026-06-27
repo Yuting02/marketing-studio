@@ -26,7 +26,7 @@ function ruleLabel(rule) {
 function VariantCard({ variant, review, reviewLoading }) {
   const [copied, setCopied] = useState(false) // 是否刚复制过（短暂提示用）
 
-  // 把这条文案的四个字段整理成一段文本，复制到剪贴板
+  // 只把广告的四个字段整理成一段文本复制（译文 translations 故意不在内）
   async function handleCopy() {
     const text = [
       `主文案：${variant.primaryText}`,
@@ -49,6 +49,13 @@ function VariantCard({ variant, review, reviewLoading }) {
       <div className="card-field">
         <span className="card-label">主文案</span>
         <p className="card-value">{variant.primaryText}</p>
+        {/* 译文参考：仅供运营理解，灰色小字，且不会被复制 */}
+        {variant.translations?.primaryText_zh && (
+          <p className="card-translation">
+            <span className="translation-tag">译文参考</span>
+            {variant.translations.primaryText_zh}
+          </p>
+        )}
       </div>
       <div className="card-field">
         <span className="card-label">标题</span>

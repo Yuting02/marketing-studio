@@ -123,6 +123,25 @@ button {
   word-break: break-word;
 }
 
+/* 译文参考：灰色小字，明显区别于广告正文 */
+.card-translation {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #9aa0a6;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.translation-tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border: 1px solid #d4d7dc;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  color: #9aa0a6;
+}
+
 /* 复制按钮 */
 .copy-btn {
   margin-top: 4px;

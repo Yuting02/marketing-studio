@@ -21,12 +21,16 @@ For EACH target language in ${JSON.stringify(
 The 3 variants must take different angles — e.g. one benefit-led, one emotion/story-led, one urgency/offer-led. Do not restate the same idea three times.
 
 Each variant has:
-- primaryText: main ad body, written in the target language, ≤125 characters
+- primaryText: main ad body, in the target language, ≤125 characters
 - headline: ≤40 characters, in the target language
 - description: ≤30 characters, in the target language
 - cta: exactly one of SHOP_NOW, LEARN_MORE, SIGN_UP, GET_OFFER
+- translations: an object with faithful, natural Chinese (中文) translations of the three text fields, for a Chinese operator to understand. These are reference glosses, NOT part of the ad:
+  - primaryText_zh: Chinese translation of primaryText
+  - headline_zh: Chinese translation of headline
+  - description_zh: Chinese translation of description
 
-Write every field directly in the target language. Do not write English first and translate.`;
+Write every ad field directly in the target language. Do not write English first and translate. Only the \`translations\` object is in Chinese.`;
 }
 
 // —— 输出 Schema（OpenAI Structured Outputs，strict）——
@@ -48,8 +52,27 @@ const OUTPUT_SCHEMA = {
             type: "string",
             enum: ["SHOP_NOW", "LEARN_MORE", "SIGN_UP", "GET_OFFER"],
           },
+          // 中文译文，仅供运营理解，不是广告的一部分
+          translations: {
+            type: "object",
+            properties: {
+              primaryText_zh: { type: "string" },
+              headline_zh: { type: "string" },
+              description_zh: { type: "string" },
+            },
+            required: ["primaryText_zh", "headline_zh", "description_zh"],
+            additionalProperties: false,
+          },
         },
-        required: ["id", "lang", "primaryText", "headline", "description", "cta"],
+        required: [
+          "id",
+          "lang",
+          "primaryText",
+          "headline",
+          "description",
+          "cta",
+          "translations",
+        ],
         additionalProperties: false,
       },
     },
