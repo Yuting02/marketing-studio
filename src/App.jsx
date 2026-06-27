@@ -8,27 +8,52 @@ function App() {
   // 语种用一个对象记录每个是否勾选，默认两个都勾上
   const [langs, setLangs] = useState({ en: true, fr: true })
 
-  // 提交后要展示的结果；null 表示还没点过按钮
+  // 接口返回的结果；null 表示还没点过按钮
   const [result, setResult] = useState(null)
+  const [loading, setLoading] = useState(false) // 请求进行中
+  const [error, setError] = useState(null)       // 出错信息
 
   // 勾选 / 取消某个语种
   function toggleLang(code) {
     setLangs((prev) => ({ ...prev, [code]: !prev[code] }))
   }
 
-  // 点"生成文案"：暂时不调接口，只把收集到的数据整理出来
-  function handleGenerate() {
+  // 点"生成文案"：把表单数据 POST 给 /api/generate，结果显示在下方
+  async function handleGenerate() {
     // 把勾选的语种对象转成数组，例如 ['en', 'fr']
     const selectedLangs = Object.keys(langs).filter((code) => langs[code])
 
-    const data = {
+    const payload = {
       productName,
       sellingPoints,
       langs: selectedLangs,
     }
 
-    console.log('表单收集到的数据：', data) // 控制台也打一份，方便调试
-    setResult(data) // 显示在页面下方
+    setLoading(true)   // 进入加载态，按钮禁用
+    setError(null)     // 清掉上一次的错误
+    setResult(null)    // 清掉上一次的结果
+
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        // 后端返回的错误带 message 字段
+        throw new Error(data?.message || `请求失败（${res.status}）`)
+      }
+
+      setResult(data) // 成功：原样显示返回数据
+    } catch (err) {
+      console.error('生成失败：', err)
+      setError(err.message || '生成失败，请稍后重试')
+    } finally {
+      setLoading(false) // 无论成败都退出加载态
+    }
   }
 
   return (
@@ -82,15 +107,23 @@ function App() {
           </div>
         </div>
 
-        <button type="button" onClick={handleGenerate}>
-          生成文案
+        <button type="button" onClick={handleGenerate} disabled={loading}>
+          {loading ? '生成中…' : '生成文案'}
         </button>
       </div>
 
-      {/* 点过按钮后，把收集到的数据显示出来，方便确认 */}
+      {/* 出错时显示错误信息 */}
+      {error && (
+        <div className="result">
+          <h2>出错了</h2>
+          <pre>{error}</pre>
+        </div>
+      )}
+
+      {/* 成功后，把接口返回的数据原样显示出来（先不做卡片） */}
       {result && (
         <div className="result">
-          <h2>收集到的输入</h2>
+          <h2>接口返回</h2>
           <pre>{JSON.stringify(result, null, 2)}</pre>
         </div>
       )}
