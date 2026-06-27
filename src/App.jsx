@@ -46,24 +46,27 @@ function VariantCard({ variant, review, reviewLoading }) {
 
   return (
     <div className="card">
+      {/* 每个外文字段下方各显示对应中文译文（灰色小字，靠样式区分，不被复制） */}
       <div className="card-field">
         <span className="card-label">主文案</span>
         <p className="card-value">{variant.primaryText}</p>
-        {/* 译文参考：仅供运营理解，灰色小字，且不会被复制 */}
         {variant.translations?.primaryText_zh && (
-          <p className="card-translation">
-            <span className="translation-tag">译文参考</span>
-            {variant.translations.primaryText_zh}
-          </p>
+          <p className="card-translation">{variant.translations.primaryText_zh}</p>
         )}
       </div>
       <div className="card-field">
         <span className="card-label">标题</span>
         <p className="card-value">{variant.headline}</p>
+        {variant.translations?.headline_zh && (
+          <p className="card-translation">{variant.translations.headline_zh}</p>
+        )}
       </div>
       <div className="card-field">
         <span className="card-label">描述</span>
         <p className="card-value">{variant.description}</p>
+        {variant.translations?.description_zh && (
+          <p className="card-translation">{variant.translations.description_zh}</p>
+        )}
       </div>
       <div className="card-field">
         <span className="card-label">引导类别(CTA)</span>
