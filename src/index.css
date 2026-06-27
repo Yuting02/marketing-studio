@@ -131,3 +131,72 @@ button {
   border-radius: 4px;
   background: #f3f4f6;
 }
+
+/* —— 质检结果区（卡片下半部分）—— */
+.card-review {
+  margin: 12px 0;
+  padding-top: 12px;
+  border-top: 1px solid #eef0f3;
+}
+
+.review-pending {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* 徽章 + 地道度评分一行 */
+.review-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+/* 状态徽章 */
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-pass {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.badge-risk {
+  background: #fdecea;
+  color: #c0392b;
+}
+
+.fluency {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* 命中规则标签 */
+.rule-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.rule-tag {
+  font-size: 0.78rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #fff4e5;
+  color: #b15c00;
+}
+
+/* 修改建议 */
+.suggestion {
+  margin-top: 4px;
+}
+
+.review-error {
+  color: #c0392b;
+}

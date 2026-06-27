@@ -4,8 +4,26 @@ import { useState } from 'react'
 const LANG_ORDER = ['en', 'fr']
 const LANG_NAMES = { en: 'English', fr: 'French' }
 
-// 单张文案卡片：展示 4 个字段，并提供「复制」按钮
-function VariantCard({ variant }) {
+// 字段英文名 → 中文（命中规则标签里用）
+const FIELD_NAMES = { primaryText: '主文案', headline: '标题', description: '描述' }
+
+// 把后端的规则码翻译成中文标签
+function ruleLabel(rule) {
+  if (rule.startsWith('length:')) {
+    const field = rule.slice('length:'.length)
+    return `长度超限(${FIELD_NAMES[field] || field})`
+  }
+  if (rule.startsWith('banned:')) {
+    const word = rule.slice('banned:'.length)
+    return `违禁词(${word})`
+  }
+  if (rule === 'sensitive') return '敏感/合规风险'
+  if (rule === 'fluency') return '地道度偏低'
+  return rule // 兜底：没认出来就原样显示
+}
+
+// 单张文案卡片：展示 4 个字段 + 质检结果，并提供「复制」按钮
+function VariantCard({ variant, review, reviewLoading }) {
   const [copied, setCopied] = useState(false) // 是否刚复制过（短暂提示用）
 
   // 把这条文案的四个字段整理成一段文本，复制到剪贴板
@@ -43,6 +61,49 @@ function VariantCard({ variant }) {
       <div className="card-field">
         <span className="card-label">引导类别(CTA)</span>
         <p className="card-value">{variant.cta}</p>
+      </div>
+
+      {/* 质检结果区：还没返回时显示占位，返回后填上徽章/标签/评分/建议 */}
+      <div className="card-review">
+        {review ? (
+          <>
+            <div className="review-top">
+              <span
+                className={`badge ${
+                  review.status === 'pass' ? 'badge-pass' : 'badge-risk'
+                }`}
+              >
+                {review.status === 'pass' ? '通过' : '风险'}
+              </span>
+              {typeof review.fluencyScore === 'number' && (
+                <span className="fluency">地道度 {review.fluencyScore}/100</span>
+              )}
+            </div>
+
+            {review.rulesHit.length > 0 && (
+              <div className="rule-tags">
+                {review.rulesHit.map((rule, i) => (
+                  <span key={i} className="rule-tag">
+                    {ruleLabel(rule)}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {review.suggestions.length > 0 && (
+              <div className="suggestion">
+                <span className="card-label">修改建议</span>
+                {review.suggestions.map((s, i) => (
+                  <p key={i} className="card-value">
+                    {s}
+                  </p>
+                ))}
+              </div>
+            )}
+          </>
+        ) : reviewLoading ? (
+          <p className="review-pending">质检中…</p>
+        ) : null}
       </div>
 
       <button type="button" className="copy-btn" onClick={handleCopy}>
@@ -144,6 +205,11 @@ function App() {
     }
   }
 
+  // 把质检结果按 variantId 建索引，方便每张卡片取自己那条
+  const reviewsById = new Map(
+    (reviewResult?.reviews || []).map((r) => [r.variantId, r]),
+  )
+
   return (
     <main className="page">
       <h1 className="page-title">出海营销内容工作台</h1>
@@ -212,14 +278,22 @@ function App() {
       {result && (
         <div className="result">
           {LANG_ORDER.map((code) => {
-            const items = result.variants.filter((v) => v.lang === code)
+            // 保留全局下标，才能用 variantId 把质检结果对到这张卡片
+            const items = result.variants
+              .map((variant, index) => ({ variant, index }))
+              .filter((item) => item.variant.lang === code)
             if (items.length === 0) return null // 没勾这个语种就不显示
             return (
               <section key={code} className="lang-group">
                 <h2 className="lang-title">{LANG_NAMES[code]}</h2>
                 <div className="card-list">
-                  {items.map((variant, index) => (
-                    <VariantCard key={`${code}-${index}`} variant={variant} />
+                  {items.map(({ variant, index }) => (
+                    <VariantCard
+                      key={index}
+                      variant={variant}
+                      review={reviewsById.get(index)}
+                      reviewLoading={reviewLoading}
+                    />
                   ))}
                 </div>
               </section>
@@ -228,24 +302,10 @@ function App() {
         </div>
       )}
 
-      {/* 质检状态：进行中 / 出错 / 原始结果（先用 <pre> 确认判定，之后再美化） */}
-      {reviewLoading && (
-        <div className="result">
-          <p>质检中…</p>
-        </div>
-      )}
-
+      {/* 质检失败时给个整体提示（此时卡片质检区为空） */}
       {reviewError && (
         <div className="result">
-          <h2>质检出错</h2>
-          <pre>{reviewError}</pre>
-        </div>
-      )}
-
-      {reviewResult && (
-        <div className="result">
-          <h2>质检结果（原始）</h2>
-          <pre>{JSON.stringify(reviewResult, null, 2)}</pre>
+          <p className="review-error">质检失败：{reviewError}</p>
         </div>
       )}
     </main>
