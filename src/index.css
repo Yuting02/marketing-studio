@@ -73,10 +73,11 @@ button {
   margin-top: 24px;
 }
 
-.error-message {
-  margin-top: 8px;
-  color: #c0392b;
-  line-height: 1.5;
+.result pre {
+  background: #eef0f3;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
 }
 
 /* 每个语种一组 */
@@ -152,22 +153,6 @@ button {
   color: #6b7280;
 }
 
-.review-content {
-  animation: review-in 180ms ease-out;
-}
-
-@keyframes review-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* 徽章 + 地道度评分一行 */
 .review-top {
   display: flex;
@@ -191,8 +176,8 @@ button {
 }
 
 .badge-risk {
-  background: #fff4e5;
-  color: #9a4d00;
+  background: #fdecea;
+  color: #c0392b;
 }
 
 .fluency {
@@ -219,17 +204,6 @@ button {
 /* 修改建议 */
 .suggestion {
   margin-top: 4px;
-}
-
-.suggestion-text {
-  font-size: 0.95rem;
-  line-height: 1.4;
-  word-break: break-word;
-}
-
-.suggestion-positive {
-  font-size: 0.85rem;
-  color: #1e7e34;
 }
 
 .review-error {
