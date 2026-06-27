@@ -40,7 +40,7 @@
 
 ## 质检节点 review（/api/review）
 
-> 核心设计：**确定性规则用代码判定，语义判断交给 LLM**，两层结果合并成每条变体的最终评估。
+> 核心设计：**确定性规则用代码判定，语义判断交给 LLM**，两层结果合并成每条变体的最终评估。注意：即使长度和违禁词由代码层最终判定，LLM 的 `suggestion` 也必须响应这些肉眼可见的问题，不能在存在风险时输出“可直接使用”。
 
 ### 规则配置（规则即配置，可随时调，无需改逻辑）
 - maxLengths：`{ primaryText: 125, headline: 40, description: 30 }`
@@ -51,6 +51,7 @@
 ### 代码层（确定性，零成本，零延迟）
 - 规则① 长度：任一字段超过 maxLengths → rulesHit 加 `length:字段名`
 - 规则② 违禁词：命中 bannedWords → rulesHit 加 `banned:词`
+- 代码层命中的风险必须进入最终 `rulesHit`，且最终建议不能是“可直接使用”。
 
 ### LLM 层（语义判断）— System
 你是一名严格的广告合规与语言质量审核员，负责审核面向海外市场的 Meta 广告。判断文案是否包含敏感或不合规内容（歧视、无法验证的医疗或健康功效宣称、虚假或误导性表述），以及它对目标语言母语者来说是否地道流畅。严格但公平。
@@ -59,6 +60,12 @@
 审核这些广告变体：{{variants_json}}
 
 每个变体的语言由其 `lang` 字段给出：en = 英文，fr = 法文。把它视为唯一事实来源，不要猜测语言，也不要把它说成任何其他语言（例如不要说 "German"）。
+
+在返回结果前，必须先逐条检查以下问题：
+1. 是否命中 bannedWords：`best, #1, no.1, number one, guaranteed, guarantee, 100%, miracle, cheapest, risk-free`。
+2. 是否超过字段长度限制：primaryText ≤125 字符，headline ≤40 字符，description ≤30 字符。
+3. 是否有敏感或不合规内容：歧视、过度医疗功效宣称、虚假或误导性表述。
+4. 是否不地道、不自然、像直译，或不符合对应语言的广告表达习惯。
 
 针对每个变体（按 id），返回：
 - sensitiveRisk：如果包含歧视性内容、过度医疗功效宣称、虚假或误导性内容，则为 true；否则为 false
@@ -69,21 +76,25 @@
 修改建议规则（重要：这里过去的输出质量不好）：
 1. 用自然、流畅的中文写，像中文母语的营销审核员。不要有翻译腔。
 2. 具体且可执行：必须点名实际出问题的字段，并说明具体修改。字段名按这个映射写：primaryText = 主文案，headline = 标题，description = 描述。不要把主文案的问题说成标题的问题，也不要把标题的问题说成主文案的问题。
-3. 禁止使用 "增加吸引力"、"更个性化"、"添加情感词汇" 这类空泛表述。
-4. suggestion 本身用中文写，但凡是引用原文问题词、问题短语、建议替换词，都必须使用该变体 `lang` 对应的原语言：en 只写英文短语，fr 只写法文短语。不要把英文/法文短语翻译成中文，也不要写中英混用或中法混用的替换词。
-5. 建议替换词必须是可以直接放回对应广告字段的原语言文案片段。不要写 "顶级thermal瓶"、"高级bouteille" 这类混合表达。
-6. 正确示例：如果 primaryText 是 "Don’t let cold drinks ruin your day. Experience the world’s best thermos now!"，应写：在主文案中将 "the world’s best" 改为 "a high-performance"，以避免绝对化夸大。不要写：在标题中改为 "顶级thermal瓶"。
-7. 如果该变体没有实际问题，严格写成 "可直接使用"；不要编造修改建议。
+3. 只要命中 bannedWords、字段超长、存在敏感风险、或地道度明显不足，suggestion 绝不能写“可直接使用”。即使 fluencyScore 很高，只要命中 bannedWords，也必须给出修改建议。
+4. 如果同时有多个问题，suggestion 要在同一条中文建议中全部覆盖，用分号分隔。不要只改其中一个问题，也不要用空泛总结代替具体修改。
+5. 禁止使用 "增加吸引力"、"更个性化"、"添加情感词汇" 这类空泛表述。
+6. suggestion 本身用中文写，但凡是引用原文问题词、问题短语、建议替换词，都必须使用该变体 `lang` 对应的原语言：en 只写英文短语，fr 只写法文短语。不要把英文/法文短语翻译成中文，也不要写中英混用或中法混用的替换词。
+7. 建议替换词必须是可以直接放回对应广告字段的原语言文案片段。不要写 "顶级thermal瓶"、"高级bouteille" 这类混合表达。
+8. 命中 bannedWords 时，必须引用原文中的具体问题短语，并给出更克制的原语言替换词。例如：如果 primaryText 是 "Transform your daily routine with the world’s best thermos. Don’t miss out, grab yours now!"，应写：在主文案中将 "world’s best" 改为 "a high-performance"，以避免绝对化夸大。不要写“可直接使用”。
+9. 只有在以下条件全部满足时，才能严格写成 "可直接使用"：未命中 bannedWords、未超长、无敏感或误导风险、fluencyScore ≥ 70，且没有实际语言质量问题。
 
-不要检查字符长度或违禁词，这些由代码处理。`translations` 字段只是参考释义，不要评估它。
+`translations` 字段只是参考释义，不要评估它。
 
 ### LLM 输出 Schema（strict）
 ```json
-{ "reviews": [ { "id": 0, "sensitiveRisk": false, "sensitiveReason": "", "fluencyScore": 88, "suggestion": "可直接使用" } ] }
+{ "reviews": [ { "id": 0, "sensitiveRisk": false, "sensitiveReason": "", "fluencyScore": 90, "suggestion": "在主文案中将 \"world’s best\" 改为 \"a high-performance\"，以避免绝对化夸大。" } ] }
 ```
 
 ### 合并逻辑（代码完成）
 每条变体输出 `{ variantId, status, rulesHit, suggestions, fluencyScore }`：
 - rulesHit = 代码层(length / banned) + LLM 层(sensitiveRisk→`sensitive`，fluencyScore < 70 → `fluency`)
 - status = rulesHit 非空 → `risk`，否则 `pass`
+- suggestions 必须和 status / rulesHit 一致：只要 status = `risk`，就不能展示“可直接使用”
+- 如果代码层命中 length / banned，而 LLM suggestion 仍为“可直接使用”，合并时应丢弃该建议，并生成或保留对应风险建议
 - 阈值 70 可调：调高更严（误杀↑、漏放↓），调低更松（漏放↑、误杀↓）

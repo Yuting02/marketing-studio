@@ -11,20 +11,37 @@ const FIELD_NAMES = { primaryText: '主文案', headline: '标题', description:
 function ruleLabel(rule) {
   if (rule.startsWith('length:')) {
     const field = rule.slice('length:'.length)
-    return `长度超限(${FIELD_NAMES[field] || field})`
+    return `长度超限·${FIELD_NAMES[field] || field}`
   }
   if (rule.startsWith('banned:')) {
     const word = rule.slice('banned:'.length)
-    return `违禁词(${word})`
+    return `违禁词·${word}`
   }
-  if (rule === 'sensitive') return '敏感/合规风险'
+  if (rule.startsWith('banned_word:')) {
+    const word = rule.slice('banned_word:'.length)
+    return `违禁词·${word}`
+  }
+  if (rule === 'sensitive') return '敏感内容'
   if (rule === 'fluency') return '地道度偏低'
   return rule // 兜底：没认出来就原样显示
+}
+
+// 兼容后端返回 suggestions 数组，或以后改成 suggestion 单字符串
+function getSuggestions(review) {
+  if (Array.isArray(review?.suggestions)) return review.suggestions.filter(Boolean)
+  if (review?.suggestion) return [review.suggestion]
+  return []
+}
+
+function isPositiveSuggestion(text) {
+  return text.trim() === '可直接使用'
 }
 
 // 单张文案卡片：展示 4 个字段 + 质检结果，并提供「复制」按钮
 function VariantCard({ variant, review, reviewLoading }) {
   const [copied, setCopied] = useState(false) // 是否刚复制过（短暂提示用）
+  const rulesHit = Array.isArray(review?.rulesHit) ? review.rulesHit : []
+  const suggestions = getSuggestions(review)
 
   // 只把广告的四个字段整理成一段文本复制（译文 translations 故意不在内）
   async function handleCopy() {
@@ -76,7 +93,7 @@ function VariantCard({ variant, review, reviewLoading }) {
       {/* 质检结果区：还没返回时显示占位，返回后填上徽章/标签/评分/建议 */}
       <div className="card-review">
         {review ? (
-          <>
+          <div className="review-content">
             <div className="review-top">
               <span
                 className={`badge ${
@@ -90,9 +107,9 @@ function VariantCard({ variant, review, reviewLoading }) {
               )}
             </div>
 
-            {review.rulesHit.length > 0 && (
+            {rulesHit.length > 0 && (
               <div className="rule-tags">
-                {review.rulesHit.map((rule, i) => (
+                {rulesHit.map((rule, i) => (
                   <span key={i} className="rule-tag">
                     {ruleLabel(rule)}
                   </span>
@@ -100,17 +117,22 @@ function VariantCard({ variant, review, reviewLoading }) {
               </div>
             )}
 
-            {review.suggestions.length > 0 && (
+            {suggestions.length > 0 && (
               <div className="suggestion">
                 <span className="card-label">修改建议</span>
-                {review.suggestions.map((s, i) => (
-                  <p key={i} className="card-value">
+                {suggestions.map((s, i) => (
+                  <p
+                    key={i}
+                    className={`suggestion-text ${
+                      isPositiveSuggestion(s) ? 'suggestion-positive' : ''
+                    }`}
+                  >
                     {s}
                   </p>
                 ))}
               </div>
             )}
-          </>
+          </div>
         ) : reviewLoading ? (
           <p className="review-pending">质检中…</p>
         ) : null}
@@ -136,7 +158,7 @@ function App() {
   const [loading, setLoading] = useState(false) // 生成请求进行中
   const [error, setError] = useState(null)       // 生成出错信息
 
-  // 质检接口（/api/review）的状态：原始结果先用 <pre> 显示，方便确认判定
+  // 质检接口（/api/review）的状态：结果按 variantId 分发到各自卡片
   const [reviewResult, setReviewResult] = useState(null)
   const [reviewLoading, setReviewLoading] = useState(false)
   const [reviewError, setReviewError] = useState(null)
@@ -165,7 +187,7 @@ function App() {
         throw new Error(data?.message || `质检失败（${res.status}）`)
       }
 
-      setReviewResult(data) // 成功：原样显示质检结果
+      setReviewResult(data) // 成功：各卡片按 variantId 展示自己的质检结果
     } catch (err) {
       console.error('质检失败：', err)
       setReviewError(err.message || '质检失败，请稍后重试')
@@ -205,8 +227,12 @@ function App() {
         throw new Error(data?.message || `请求失败（${res.status}）`)
       }
 
-      setResult(data) // 成功：渲染卡片
-      runReview(data.variants) // 卡片出来后，自动用 variants 调质检（不阻塞 loading）
+      setResult(data) // 第一步：先渲染文案卡片
+
+      // 第二步：下一帧再触发质检，让用户先看到生成结果，再看到「质检中…」
+      window.requestAnimationFrame(() => {
+        runReview(data.variants)
+      })
     } catch (err) {
       console.error('生成失败：', err)
       setError(err.message || '生成失败，请稍后重试')
@@ -216,7 +242,7 @@ function App() {
   }
 
   // 把质检结果按 variantId 建索引，方便每张卡片取自己那条
-  const reviewsById = new Map(
+  const reviewsByVariantId = new Map(
     (reviewResult?.reviews || []).map((r) => [r.variantId, r]),
   )
 
@@ -280,7 +306,7 @@ function App() {
       {error && (
         <div className="result">
           <h2>出错了</h2>
-          <pre>{error}</pre>
+          <p className="error-message">{error}</p>
         </div>
       )}
 
@@ -288,20 +314,20 @@ function App() {
       {result && (
         <div className="result">
           {LANG_ORDER.map((code) => {
-            // 保留全局下标，才能用 variantId 把质检结果对到这张卡片
+            // 后端 review 的 variantId 等于提交 variants 时的数组位置
             const items = result.variants
-              .map((variant, index) => ({ variant, index }))
+              .map((variant, variantId) => ({ variant, variantId }))
               .filter((item) => item.variant.lang === code)
             if (items.length === 0) return null // 没勾这个语种就不显示
             return (
               <section key={code} className="lang-group">
                 <h2 className="lang-title">{LANG_NAMES[code]}</h2>
                 <div className="card-list">
-                  {items.map(({ variant, index }) => (
+                  {items.map(({ variant, variantId }) => (
                     <VariantCard
-                      key={index}
+                      key={variantId}
                       variant={variant}
-                      review={reviewsById.get(index)}
+                      review={reviewsByVariantId.get(variantId)}
                       reviewLoading={reviewLoading}
                     />
                   ))}
