@@ -1,211 +1,226 @@
-/* 全局基础样式 */
-* {
-  margin: 0;
-  padding: 0;
+/* 出海文案工作台 — 设计系统全局样式
+   来源：claude.ai/design 项目 marketing-studio（tokens/* + base + 响应式）
+   注意：@import 必须位于文件最前（@charset 之后），勿调整顺序。 */
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+/* ─── Tokens ─────────────────────────────────────────────── */
+:root {
+  /* —— Colors —— */
+  /* Ink & neutrals */
+  --ink-900: #15161a;   /* primary text, black buttons */
+  --ink-800: #232429;
+  --ink-700: #3a3c43;
+  --grey-600: #6b7280;  /* secondary text / labels */
+  --grey-500: #868d97;
+  --grey-400: #9aa0a6;  /* tertiary — Chinese gloss text */
+  --grey-300: #c4c8ce;
+  --line-200: #e6e8ec;  /* default card border */
+  --line-100: #eef0f3;  /* hairline / inner dividers */
+  --surface-100: #f7f8fa; /* app background */
+  --surface-50: #fbfcfd;
+  --white: #ffffff;
+
+  /* Coral — the single accent */
+  --coral-600: #e8543a; /* hover / pressed */
+  --coral-500: #fb6b4b; /* primary accent */
+  --coral-400: #ff8467;
+  --coral-100: #ffe9e2; /* soft coral wash */
+  --coral-ink: #b8431f; /* coral text on light */
+
+  /* Mint — calm surface block (NOT a status color) */
+  --mint-600: #1e7a4f;
+  --mint-500: #2fa06a;
+  --mint-200: #cde9d8;  /* mint border */
+  --mint-100: #eaf6ef;  /* mint surface block */
+  --mint-50:  #f3faf6;
+
+  /* Soft blue — focus ring option / tiny accents */
+  --blue-500: #3b82f6;
+  --blue-100: #e6effd;
+
+  /* Semantic — pass (green) */
+  --pass-bg: #e7f5ec;
+  --pass-border: #bfe6cc;
+  --pass-text: #1b7a43;
+  --pass-strong: #15803d;
+
+  /* Semantic — risk (orange, soft & clear — never red) */
+  --risk-bg: #feefe2;
+  --risk-border: #f8d6b5;
+  --risk-text: #c2570e;
+  --risk-strong: #a8480a;
+
+  /* —— Semantic aliases (use these in components) —— */
+  --text-strong: var(--ink-900);
+  --text-body: var(--ink-800);
+  --text-muted: var(--grey-600);
+  --text-gloss: var(--grey-400);   /* Chinese reference translation */
+  --text-on-dark: var(--white);
+  --text-on-coral: var(--white);
+
+  --surface-page: var(--surface-100);
+  --surface-card: var(--white);
+  --surface-panel: var(--mint-100);  /* input-zone panel */
+  --surface-raised: var(--surface-50);
+
+  --border-card: var(--line-200);
+  --border-input: var(--grey-300);
+  --border-hairline: var(--line-100);
+
+  --accent: var(--coral-500);
+  --accent-hover: var(--coral-600);
+  --accent-soft: var(--coral-100);
+  --accent-ink: var(--coral-ink);
+
+  --focus-ring: rgba(59, 130, 246, 0.35); /* soft blue focus */
+
+  /* —— Typography —— */
+  --font-sans: "Plus Jakarta Sans", "Noto Sans SC", system-ui, -apple-system,
+    "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* Sizes — desktop scale */
+  --fs-display: 3.5rem;   /* 56 — hero headline */
+  --fs-h1: 2.5rem;        /* 40 — section headline */
+  --fs-h2: 2rem;          /* 32 */
+  --fs-h3: 1.5rem;        /* 24 */
+  --fs-lead: 1.125rem;    /* 18 — hero subhead / lead */
+  --fs-body: 1rem;        /* 16 */
+  --fs-sm: 0.875rem;      /* 14 — secondary */
+  --fs-caption: 0.8125rem;/* 13 — labels, gloss */
+  --fs-micro: 0.75rem;    /* 12 — pills, eyebrow */
+
+  /* Weights */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+
+  /* Line heights */
+  --lh-tight: 1.08;
+  --lh-snug: 1.25;
+  --lh-normal: 1.55;
+  --lh-relaxed: 1.7;
+
+  /* Tracking */
+  --ls-tight: -0.02em;
+  --ls-normal: 0;
+  --ls-wide: 0.04em;
+
+  /* —— Spacing (4px base) —— */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* Layout */
+  --container-max: 1120px;
+  --container-narrow: 720px;
+  --gutter: 24px;
+  --section-y: 96px;
+
+  /* —— Effects —— */
+  /* Radius */
+  --radius-xs: 6px;
+  --radius-sm: 8px;    /* inputs, pills-ish */
+  --radius-md: 12px;   /* cards */
+  --radius-lg: 14px;   /* large panels */
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* Shadows — kept very subtle on light surfaces */
+  --shadow-xs: 0 1px 2px rgba(20, 22, 26, 0.04);
+  --shadow-card: 0 1px 2px rgba(20, 22, 26, 0.04), 0 1px 3px rgba(20, 22, 26, 0.06);
+  --shadow-card-hover: 0 6px 16px rgba(20, 22, 26, 0.08);
+  --shadow-pop: 0 12px 32px rgba(20, 22, 26, 0.12);
+  --shadow-focus: 0 0 0 3px var(--focus-ring);
+
+  /* Borders */
+  --bw-hair: 1px;
+  --bw-strong: 1.5px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur: 180ms;
+  --dur-slow: 280ms;
+}
+
+/* ─── Base reset & defaults ──────────────────────────────── */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
-  background: #f7f8fa;
-  color: #1a1a1a;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  color: var(--text-body);
+  background: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* 页面容器：限制宽度并居中，朴素能用即可 */
-.page {
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 32px 24px;
+html,
+body {
+  background: var(--surface-page);
 }
 
-.page-title {
-  font-size: 1.8rem;
-  font-weight: 700;
+h1, h2, h3, h4 {
+  margin: 0;
+  color: var(--text-strong);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-tight);
 }
 
-.page-subtitle {
-  font-size: 1rem;
-  color: #6b7280;
-  margin-bottom: 24px;
+p { margin: 0; }
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
-/* 表单：竖向排列，每项之间留点间距 */
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+::selection {
+  background: var(--coral-100);
+  color: var(--coral-ink);
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* ─── Responsive — 栅格在窄屏收列 ────────────────────────── */
+@media (max-width: 900px) {
+  .ms-hero-grid,
+  .ms-feature-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .ms-input-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .ms-card-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
-.field-label {
-  font-weight: 600;
-}
-
-.field input[type="text"],
-.field textarea {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font: inherit;
-}
-
-/* 语种复选框横向排列 */
-.checkbox-row {
-  display: flex;
-  gap: 20px;
-}
-
-button {
-  align-self: flex-start;
-  padding: 8px 20px;
-  font: inherit;
-  cursor: pointer;
-}
-
-/* 提交后展示收集到的数据 */
-.result {
-  margin-top: 24px;
-}
-
-.result pre {
-  background: #eef0f3;
-  padding: 12px;
-  border-radius: 4px;
-  overflow-x: auto;
-}
-
-/* 每个语种一组 */
-.lang-group {
-  margin-bottom: 28px;
-}
-
-.lang-title {
-  font-size: 1.2rem;
-  margin-bottom: 12px;
-}
-
-/* 同一组里的卡片竖向排列 */
-.card-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* 单张文案卡片 */
-.card {
-  background: #fff;
-  border: 1px solid #e3e6ea;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-/* 卡片里的每个字段：小标签 + 内容 */
-.card-field {
-  margin-bottom: 10px;
-}
-
-.card-label {
-  display: block;
-  font-size: 0.8rem;
-  color: #6b7280;
-  margin-bottom: 2px;
-}
-
-.card-value {
-  font-size: 0.95rem;
-  line-height: 1.4;
-  word-break: break-word;
-}
-
-/* 中文译文：灰色小字，明显区别于广告正文 */
-.card-translation {
-  margin-top: 4px;
-  font-size: 0.8rem;
-  color: #9aa0a6;
-  line-height: 1.4;
-  word-break: break-word;
-}
-
-/* 复制按钮 */
-.copy-btn {
-  margin-top: 4px;
-  padding: 6px 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: #f3f4f6;
-}
-
-/* —— 质检结果区（卡片下半部分）—— */
-.card-review {
-  margin: 12px 0;
-  padding-top: 12px;
-  border-top: 1px solid #eef0f3;
-}
-
-.review-pending {
-  font-size: 0.85rem;
-  color: #6b7280;
-}
-
-/* 徽章 + 地道度评分一行 */
-.review-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-/* 状态徽章 */
-.badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.badge-pass {
-  background: #e6f4ea;
-  color: #1e7e34;
-}
-
-.badge-risk {
-  background: #fdecea;
-  color: #c0392b;
-}
-
-.fluency {
-  font-size: 0.85rem;
-  color: #6b7280;
-}
-
-/* 命中规则标签 */
-.rule-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.rule-tag {
-  font-size: 0.78rem;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: #fff4e5;
-  color: #b15c00;
-}
-
-/* 修改建议 */
-.suggestion {
-  margin-top: 4px;
-}
-
-.review-error {
-  color: #c0392b;
+@media (max-width: 1100px) and (min-width: 901px) {
+  .ms-card-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
 }
