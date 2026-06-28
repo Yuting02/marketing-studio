@@ -1,16 +1,16 @@
 import OpenAI from "openai";
 
 // 生成节点：接收产品信息，调用 OpenAI 生成 Meta 多语种广告文案。
-// 提示词与输出 schema 严格照抄 docs/prompt/prompts-v2.md「生成节点 generation」那一节。
+// 提示词与输出 schema 严格照抄 docs/prompts.md「生成节点 generation」那一节。
 
 // 优先用高性价比的 gpt-4o-mini；若该模型在账号里不可用，自动换下一个候选模型。
 const CANDIDATE_MODELS = ["gpt-4o-mini", "gpt-4o"];
 
-// —— System 提示词（docs/prompt/prompts-v2.md）——
+// —— System 提示词（docs/prompts.md）——
 const SYSTEM_PROMPT =
   "你是一名资深海外效果广告文案，负责为正在拓展海外市场的品牌撰写 Meta (Facebook/Instagram) 广告文案。文案必须让目标语言的母语读者读起来地道、自然，绝不能生硬直译或像翻译腔。遵循 Meta 广告字段规范和指定的字符限制。";
 
-// —— User 提示词模板（docs/prompt/prompts-v2.md，{{...}} 用表单值填充）——
+// —— User 提示词模板（docs/prompts.md，{{...}} 用表单值填充）——
 function buildUserPrompt({ productName, sellingPoints, langs }) {
   return `产品：${productName}
 核心卖点：${sellingPoints}
@@ -34,7 +34,7 @@ function buildUserPrompt({ productName, sellingPoints, langs }) {
 }
 
 // —— 输出 Schema（OpenAI Structured Outputs，strict）——
-// 对应 docs/prompt/prompts-v2.md：variants 数组，每项含 translations，全部必填。
+// 对应 docs/prompts.md：variants 数组，每项含 translations，全部必填。
 const OUTPUT_SCHEMA = {
   type: "object",
   properties: {
