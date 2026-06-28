@@ -116,26 +116,29 @@ function riskFallbackSuggestion(rulesHit, llmReview, fluencyScore) {
 // LLM 层（提示词与 schema 照抄 docs/prompts.md）
 // ——————————————————————————————————————————————
 const REVIEW_SYSTEM_PROMPT =
-  "You are a strict advertising-compliance and language-quality reviewer for Meta ads in overseas markets. Judge whether copy contains sensitive or non-compliant content (discrimination, unverifiable medical/health claims, false or misleading statements), and how native and fluent it reads to a first-language speaker. Be strict but fair.";
+  "你是一名严格的广告合规与语言质量审核员，负责审核面向海外市场的 Meta 广告。判断文案是否包含敏感或不合规内容（歧视、无法验证的医疗或健康功效宣称、虚假或误导性表述），以及它对目标语言母语者来说是否地道流畅。严格但公平。";
 
 function buildReviewUserPrompt(variantsForLlm) {
-  return `Review these ad variants: ${JSON.stringify(variantsForLlm)}
+  return `审核这些广告变体：${JSON.stringify(variantsForLlm)}
 
-Each variant's language is given by its \`lang\` field: en = English, fr = French. Treat this as ground truth — never guess the language and never call it anything else (e.g. do not say "German").
+每个变体的语言由其 \`lang\` 字段给出：en = 英文，fr = 法文。把它视为唯一事实来源，不要猜测语言，也不要把它说成任何其他语言（例如不要说 "German"）。
 
-For EACH variant (by id), return:
-- sensitiveRisk: true if it has discriminatory / medical-overclaiming / false-or-misleading content, else false
-- sensitiveReason: if true, a short reason in Chinese (quote any offending phrase verbatim in its original language); else ""
-- fluencyScore: 0-100 — how native and natural it reads in ITS OWN language (per the lang field)
-- suggestion: follow the rules below
+针对每个变体（按 id），返回：
+- sensitiveRisk：如果包含歧视性内容、过度医疗功效宣称、虚假或误导性内容，则为 true；否则为 false
+- sensitiveReason：如果 sensitiveRisk 为 true，用中文给出简短原因（任何违规短语必须按原语言逐字引用）；否则为 ""
+- fluencyScore：0-100，表示它在自身语言中读起来有多地道自然（以 \`lang\` 字段为准）
+- suggestion：遵循下面的规则
 
-Suggestion rules (important — past output was bad here):
-1. Write in natural, fluent Chinese, like a native Chinese marketing reviewer. No awkward translationese.
-2. Be specific and actionable: name the field and the concrete change. Forbidden: vague filler like "增加吸引力"、"更个性化"、"添加情感词汇".
-3. When you reference a specific word/phrase from the copy (a problem, or a proposed replacement), quote it VERBATIM in the copy's original language (English or French). Do NOT translate that phrase into Chinese (e.g. never render "unmatched insulation" as "无与伦比的绝缘").
-4. If the variant has no real issue, write exactly "可直接使用" — do not invent a change.
+修改建议规则（重要：这里过去的输出质量不好）：
+1. 用自然、流畅的中文写，像中文母语的营销审核员。不要有翻译腔。
+2. 具体且可执行：必须点名实际出问题的字段，并说明具体修改。字段名按这个映射写：primaryText = 主文案，headline = 标题，description = 描述。不要把主文案的问题说成标题的问题，也不要把标题的问题说成主文案的问题。
+3. 禁止使用 "增加吸引力"、"更个性化"、"添加情感词汇" 这类空泛表述。
+4. suggestion 本身用中文写，但凡是引用原文问题词、问题短语、建议替换词，都必须使用该变体 \`lang\` 对应的原语言：en 只写英文短语，fr 只写法文短语。不要把英文 / 法文短语翻译成中文，也不要写中英混用或中法混用的替换词。
+5. 建议替换词必须是可以直接放回对应广告字段的原语言文案片段。不要写 "顶级thermal瓶"、"高级bouteille" 这类混合表达。
+6. 正确示例：如果 primaryText 是 "Don’t let cold drinks ruin your day. Experience the world’s best thermos now!"，应写：在主文案中将 "the world’s best" 改为 "a high-performance"，以避免绝对化夸大。不要写：在标题中改为 "顶级thermal瓶"。
+7. 如果该变体没有实际问题，严格写成 "可直接使用"；不要编造修改建议。
 
-Do NOT check character length or banned keywords — those are handled in code. The \`translations\` field is only a reference gloss; do not evaluate it.`;
+不要检查字符长度或违禁词，这些由代码处理。\`translations\` 字段只是参考释义，不要评估它。`;
 }
 
 // LLM 输出 Schema（strict）
