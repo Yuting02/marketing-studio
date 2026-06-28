@@ -11,6 +11,8 @@ export function Input({
   type = "text",
   disabled = false,
   invalid = false,
+  onFocus,
+  onBlur,
   style = {},
   ...rest
 }) {
@@ -22,8 +24,14 @@ export function Input({
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}
-      onFocus={() => setFocus(true)}
-      onBlur={() => setFocus(false)}
+      onFocus={(e) => {
+        setFocus(true);
+        onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        setFocus(false);
+        onBlur?.(e);
+      }}
       style={{
         width: "100%",
         padding: "11px 14px",

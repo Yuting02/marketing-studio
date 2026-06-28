@@ -192,6 +192,13 @@ export function Workbench({ innerRef }) {
           <Field label="产品名">
             <Input
               value={product}
+              onFocus={() => {
+                // 首次聚焦：清空预填示例，让用户直接输入
+                if (!productTouched) {
+                  setProduct("");
+                  setProductTouched(true);
+                }
+              }}
               onChange={(e) => {
                 setProduct(e.target.value);
                 setProductTouched(true);
@@ -204,6 +211,13 @@ export function Workbench({ innerRef }) {
             <Textarea
               rows={3}
               value={points}
+              onFocus={() => {
+                // 首次聚焦：清空预填示例，让用户直接输入
+                if (!pointsTouched) {
+                  setPoints("");
+                  setPointsTouched(true);
+                }
+              }}
               onChange={(e) => {
                 setPoints(e.target.value);
                 setPointsTouched(true);

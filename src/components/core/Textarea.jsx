@@ -8,6 +8,8 @@ export function Textarea({
   rows = 4,
   disabled = false,
   invalid = false,
+  onFocus,
+  onBlur,
   style = {},
   ...rest
 }) {
@@ -19,8 +21,14 @@ export function Textarea({
       placeholder={placeholder}
       rows={rows}
       disabled={disabled}
-      onFocus={() => setFocus(true)}
-      onBlur={() => setFocus(false)}
+      onFocus={(e) => {
+        setFocus(true);
+        onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        setFocus(false);
+        onBlur?.(e);
+      }}
       style={{
         width: "100%",
         padding: "12px 14px",
