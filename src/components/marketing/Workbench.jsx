@@ -46,6 +46,9 @@ export function Workbench({ innerRef }) {
   // 预填示例输入（来自设计 demo），但结果区默认为空
   const [product, setProduct] = useState("便携保温杯");
   const [points, setPoints] = useState("12 小时保温；一键开盖；316 不锈钢内胆");
+  // 预填的示例文字显示为灰色，用户一旦改动（touched）即变黑色
+  const [productTouched, setProductTouched] = useState(false);
+  const [pointsTouched, setPointsTouched] = useState(false);
   const [langs, setLangs] = useState({ en: true, fr: true });
 
   // 生成接口状态
@@ -187,14 +190,26 @@ export function Workbench({ innerRef }) {
       >
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20 }} className="ms-input-grid">
           <Field label="产品名">
-            <Input value={product} onChange={(e) => setProduct(e.target.value)} placeholder="例如：便携保温杯" />
+            <Input
+              value={product}
+              onChange={(e) => {
+                setProduct(e.target.value);
+                setProductTouched(true);
+              }}
+              placeholder="例如：便携保温杯"
+              style={{ color: productTouched ? "var(--text-strong)" : "var(--text-gloss)" }}
+            />
           </Field>
           <Field label="核心卖点">
             <Textarea
               rows={3}
               value={points}
-              onChange={(e) => setPoints(e.target.value)}
+              onChange={(e) => {
+                setPoints(e.target.value);
+                setPointsTouched(true);
+              }}
               placeholder="写 2-3 句，例如：12 小时保温；一键开盖；316 不锈钢内胆"
+              style={{ color: pointsTouched ? "var(--text-strong)" : "var(--text-gloss)" }}
             />
           </Field>
         </div>
