@@ -132,7 +132,7 @@ function FlipCarousel({ images }) {
       // 让新加入的卡从下方滑入最底层槽位
       setTimeout(() => setCards((prev) => prev.map((c) => (c.state === 'enter' ? { ...c, state: 2 } : c))), 40)
       // 翻飞动画结束后移除离场卡
-      setTimeout(() => setCards((prev) => prev.filter((c) => c.state !== 'exit')), 680)
+      setTimeout(() => setCards((prev) => prev.filter((c) => c.state !== 'exit')), 520)
     }
     const t = setInterval(tick, 3000)
     return () => clearInterval(t)
@@ -150,7 +150,7 @@ function FlipCarousel({ images }) {
               left: 0,
               right: 0,
               top: 0,
-              transition: 'transform 0.62s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.62s ease',
+              transition: 'transform 0.62s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.5s ease',
               ...STACK_POS[c.state],
             }}
           >
